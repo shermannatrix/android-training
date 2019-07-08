@@ -1,0 +1,393 @@
+1.  As a respect to the user's device, when any Android app needs to use a
+    particular hardware feature on the phone, or access personal information
+    like contact lists, photos, Bluetooth, WiFi, or Camera, it will need to
+    prompt the user for permission that the app will be using those things
+    during the time that it exists on the user's phone. So in order for us to
+    take a photo using the phone's camera, we will need to first modify our
+    AndroidManifest.xml file.
+
+    Add the following code within the <manifest></manifest> XML tags:
+
+    <uses-feature android:name="android.hardware.camera2"
+        android:required="true" />
+    
+    Next, in order for us to save our new photo, we will also need to ask the
+    user's permission to let us write to their storage:
+
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STROAGE" />
+
+2.  Go back to the Kotlin file where we have written the method for our Button
+    click event.
+
+    (a) At the start of the MainActivity class, add the following line of code:
+
+        val REQUEST_IMAGE_CAPTURE = 1
+    
+    (b) Next, we will add another custom method and we will put it below our
+        onCreate() method:
+
+        private fun dispatchTakePictureIntent() {
+            Intent(MediaStore.ACTION_IMAGE_CAPTURE).also {takePictureIntent ->
+                takePictureIntent.resolveActivity (packageManager)?.also {
+                    startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE)
+                }
+            }
+        }
+    
+    [NOTE]
+        At the current moment, we haven't written any code that will save the
+        photo that will be captured. But Build and Run the app now to take a
+        look.
+
+3.  Now, in order to save our photo into storage, we will need to add a bunch of code to
+    our dispatchTakePictureIntent() method:
+
+    (a) First we need to add a new variable:
+
+        var currentPhotoPath: String = ""
+    
+    (b) Next, we'll add another method called createImageFile():
+
+        @Throws(IOException::class)
+        private fun createImageFile(): File {
+            val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
+            val storageDir: File? = getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+            return File.createTempFile(
+                "JPEG_${timeStamp}_",   /* prefix */
+                ".jpg",                 /* suffix */
+                storageDir                    /* directory */
+            ).apply {
+                currentPhotoPath = absolutePath
+            }
+        }
+    
+    (c) Next, we're going to update the dispatchTakePictureIntent() method:
+
+        takePictureIntent.resolveActivity (packageManager)?.also {
+            // Create the File where the photo should go
+            val photoFile: File? = try {
+                createImageFile()
+            } catch (ex: IOException) {
+                null
+            }
+            // Continue only if the File was successfully created.
+            photoFile?.also {
+                val photoURI: Uri = FileProvider.getUriForFile(
+                    this,
+                    "com.training.TrainingApp",
+                    it
+                )
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI)
+                startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE)
+            }
+        }
+    
+    (d) Next, right-click on the "res" folder and select "New" -> "Android Resource 
+        Directory".
+
+        (i)     Under the "Resource type:" field, select "xml".
+        (ii)    The "Directory Name:" field should be automatically set for you.
+        (iii)   Select "OK".
+        (iv)    Right-click the xml resource directory and select "New" -> 
+                "XML resource file". Save the file name as "file_paths.xml".
+        (v)     Now, update the resource file with the following code:
+
+                <?xml version="1.0" encoding="utf-8"?>
+                <paths xmlns:android="http://schemas.android.com/apk/res/android">
+                    <external-path
+                            name="my_images"
+                            path="Android/data/com.training.TrainingApp.files/Pictures" />
+                </paths>
+    
+    (e) Update the AndroidManifest.xml:
+
+        Add the following XML code within the <application ...></application> tags:
+
+        <provider
+                android:name="androidx.core.content.FileProvider"
+                android:authorities="com.training.TrainingApp"
+                android:exported="false"
+                android:grantUriPermissions="true">
+            <meta-data android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths"></meta-data>
+        </provider>
+
+4.  Finally, let's update our Button event handler method:
+
+    btnTakePhoto.setOnClickListener {
+        //Toast.makeText(this,"You have clicked me!",Toast.LENGTH_LONG).show()
+        dispatchTakePictureIntent()
+    }
+
+5.  Before we can display our image, for the sake of our exercise, we will be adding another
+    button to our UI such that it will be horizontally side-by-side with our Take Photo
+    button.
+
+    Modify the section of the UI view where the Take Photo button is with the following code
+    segment:
+
+    <LinearLayout
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:orientation="horizontal">
+		<Button
+				android:id="@+id/btnTakePhoto"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_marginLeft="@dimen/activity_horizontal_margin"
+				android:layout_marginTop="@dimen/activity_vertical_margin"
+				android:backgroundTint="#3F51B5"
+				android:layout_weight="1"
+				android:text="Take Photo"
+				android:textColor="#FFFFFF" />
+			
+		<Button
+				android:id="@+id/btnShowPhoto"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_marginLeft="8dp"
+				android:layout_marginTop="@dimen/activity_vertical_margin"
+				android:layout_marginRight="@dimen/activity_horizontal_margin"
+				android:backgroundTint="#3F51B5"
+				android:layout_weight="1"
+                android:visibility="invisible"
+				android:text="Show Photo"
+				android:textColor="#FFFFFF" />
+	</LinearLayout>
+
+    Now, we will need to set up the code within our Kotlin file so that we can modify the
+    enabled attribute value after the photo has been saved.
+
+    Place the following line of code below the btnTakePhoto declaration:
+
+    private lateinit var btnShowPhoto: Button
+
+    Next, we need to associate our UI control with the right UI element:
+
+    btnShowPhoto = findViewById(R.id.btnShowPhoto)
+
+6.  Next, we want to display the photo that we have just captured. Return to the UI design
+    view and drag the ImageView UI control onto the design view under the Button.
+
+    (a) When promoted to select from the available Resources, we will select the 
+        "avatars" collection under Sample data.
+
+        Click "OK".
+
+    (b) We will modify a number of attributes using the Attributes panel:
+
+        (i)     layout_width: match_parent
+        (ii)    layout_height: match_parent
+        (iii)   id: imgPhoto
+        (iv)    scaleType: fitCenter
+    
+    (c) For now, let's switch over to the XML (Text) View of our UI. We will copy the
+        Button control that we have, and then renaming the text and id attributes.
+
+        Place it under the LinearLayout control where our two buttons are.
+
+        Change the attributes as follows:
+
+        (i)     android:id="@+id/btnSharePhoto"
+        (ii)    android:text="Share Photo"
+
+        We will also be modifying our layout_margins:
+
+        android:layout_marginLeft="@dimen/activity_horizontal_margin"
+		android:layout_marginTop="@dimen/activity_vertical_margin"
+		android:layout_marginRight="@dimen/activity_horizontal_margin"
+		android:layout_marginBottom="@dimen/activity_vertical_margin"
+
+7.  To display out image, we will need to update our Kotlin file.
+
+    (a) First, we need to import the following libraries:
+
+        import android.graphics.Bitmap
+        import android.graphics.BitmapFactory
+
+        An easier way would be to do this:
+
+        import android.graphics.*
+
+        The wildcard "*" character in our statement tells the compiler to look into all
+        the classes that belong to the graphics namespace.
+    
+    (b) Next, we will need to declare our ImageView control just like we did with our
+        Button control earlier.
+
+        private lateinit var imgPhoto: ImageView;
+
+    (c) We will need to associate this UI control with the element that we have added on
+        the design view.
+
+        imgPhoto = findViewById(R.id.imgPhoto)
+    
+    (d) Next, we will add the following method below our onCreate() method.
+
+        override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+            if (requestCode == REQUEST_TAKE_PHOTO && resultCode == Activity.RESULT_OK) {
+                btnShowPhoto.isEnabled = true
+            }
+        }
+
+        Time to add our event handler method for the Show Photo button.
+
+        btnTakePhoto.setOnClickListener {
+            ...
+        }
+
+        // Add the code here.
+        btnShowPhoto.setOnClickListener {
+            val photo = File(currentPhotoPath)
+            if (photo.length() > 0) {
+                imgPhoto.setImageBitmap(BitmapFactory.decodeFile(currentPhotoPath))
+            }
+        }
+
+8.  Finally, we can now share our photo. But before we do that, there is one final improvement 
+    that we can make to our potentially lengthy view. We to be able to scroll as we add more 
+    content to our layout. To do that, go back to our UI view and then we are going to add 
+    the ScrollView layout container. Place it at the top within our ConstraintLayout.
+
+    <androidx.constraintlayout.widget.ConstraintLayout ...>
+
+        <ScrollView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			app:layout_constraintLeft_toLeftOf="parent"
+			app:layout_constraintTop_toTopOf="parent">
+
+            // Except for our BottomNavigationView control. 
+            // Place all of our screen's content into this area here.
+            // Remove the layout_constraint attributes from the LinearLayout and place it
+            // with our ScrollView layout container.
+        
+        </ScrollView>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    (a) Now, we will add the following line of code to the top of our class declarations:
+
+        var photoURI: Uri? = null
+
+        Next, let's modify the one place where it is being re-assigned. This will help to 
+        ensure that whatever values we capture during the process, it stays until we don't
+        need it anymore.
+
+        Modify this line:
+
+        val photoURI: Uri = FileProvider.getUriForFile(...)
+
+        to:
+
+        photoURI = FileProvider.getUriForFile(...)
+    
+    (b) We need to make sure that we have declared out Button UI in our Kotlin file:
+
+        private lateinit var btnSharePhoto: Button
+
+        And we also need to tie it to the UI element:
+
+        btnSharePhoto = findViewById(R.id.btnSharePhoto)
+        
+    (c) Next, we will need the event listener for out Share Photo button. Add the 
+        event listener after our Take Photo event listener in onCreate():
+
+        btnSharePhoto.setOnClickListener {
+            val intent = Intent().apply {
+                this.action = Intent.ACTION_SEND
+                this.putExtra(Intent.EXTRA_STREAM, photoURI)
+                this.type = "image/jpeg"
+            }
+            
+        }
+
+9.  In this final stage of our exercise, we will be looking at knowing how to access photos
+    from the photo galleries on our devices.
+
+    (a) First thing we'll be doing is adding another button, this time, re-organising some 
+        of the buttons that we added so far.
+
+        Move the "Show Photo" button down, so that it is horizontally aligned before the 
+        "Share Photo" button.
+
+        The code for the second row should look like this:
+
+        <LinearLayout
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:layout_marginTop="@dimen/activity_vertical_margin"
+				android:orientation="horizontal">
+            <Button
+			    android:id="@+id/btnShowPhoto"
+			    android:layout_width="wrap_content"
+			    android:layout_height="wrap_content"
+				android:layout_marginLeft="@dimen/activity_horizontal_margin"
+				android:layout_marginTop="@dimen/activity_vertical_margin"
+				android:layout_weight="1"
+				android:backgroundTint="#3F51B5"
+				android:visibility="invisible"
+				android:text="Show Photo"
+				android:textColor="#FFFFFF" />
+				
+			<Button
+				android:id="@+id/btnSharePhoto"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_marginLeft="8dp"
+				android:layout_marginTop="@dimen/activity_vertical_margin"
+				android:layout_marginRight="@dimen/activity_horizontal_margin"
+				android:layout_weight="1"
+				android:backgroundTint="#3F51B5"
+				android:text="Share Photo"
+				android:visibility="invisible"
+				android:textColor="#FFFFFF" />
+        </LinearLayout>
+    
+    (b) Back to the first row, let's rename the 2nd Button's id attribute as well as the text
+        value:
+
+        (i)     id="@+id/btnPickPhoto"
+        (ii)    text="Pick a Photo"
+
+    (c) Once you have set up the buttons, remember to switch back to the Design view to 
+        double check that the buttons are position evenly. It should be two rows of button
+        that look something like the following:
+
+        | Take Photo |  | Pick a Photo |
+        | Show Photo |  | Share Photo  |
+    
+    (d) Let's set up the code for this new button.
+
+        We will need to declare a new code number so that we can differentiate this event
+        from our "Take Photo" event.
+
+        val IMAGE_PICK_CODE = 2
+
+        Add the declaration statement to the MainActivity.kt file:
+
+        private lateinit var btnPickPhoto: Button
+
+        Next, we will need to associate our Button control with the UI element:
+
+        btnPickPhoto = findViewById(R.id.btnPickPhoto)
+
+        Add an event listener for "Pick a Photo" button and place it below the "Take Photo"
+        button listening event:
+
+        btnPickPhoto.setOnClickListener {
+            val pickPhotoIntent = Intent(Intent.ACTION_PICK)
+            intent.type = "image/*"
+            startActivityForResult(intent, IMAGE_PICK_CODE)
+        }
+
+        Lastly, we will need to update the code within our onActivityResult() method:
+
+        if (requestCode == REQUEST_TAKE_PHOTO && resultCode == Activity.RESULT_OK) {
+            btnShowPhoto.isVisible = true
+            btnSharePhoto.isVisible = true
+        } else if (requestCode == IMAGE_PICK_CODE && resultCode == Activity.RESULT_OK) {
+            imgPhoto.setImageURI(data?.data)
+        }
+
+        Notice the 2nd "else if" condition that we have added to check for a response after
+        we are done with picking a photo.

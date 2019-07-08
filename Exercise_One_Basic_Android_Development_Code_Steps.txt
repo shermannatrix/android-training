@@ -1,0 +1,92 @@
+1.  Add a LinearLayout above TextView control.
+
+2.  Set the LinearLayout orientation to "vertical"
+
+3.  Cut-and-paste the TextView control inside the LinearLayout tags
+
+4.  Remove the "layout_constraint..." attributes from TextView, now
+    add that to the LinearLayout.
+
+5.  Switch back to Design view.
+
+6.  Drag a Button UI control and place it directly below our TextView UI control.
+
+7.  Expand the UI control's attributes panel.
+
+8.  Expand the "Declared Attributes" section at the top.
+
+9.  Modified the id of the Button to "btnTakePhoto".
+    Modify the text attribute to "Take Photo"
+
+10. Switch over to the text view. Notice that the "android:text" & "android:id"
+    attributes have reflected the changes we have just made. Also note how the id
+    of the UI control is declared, "@+id/", which is unlike most of the other 
+    attributes.
+
+11. Add the horizontal margins to our button so that it aligns in the center like
+    our TextView UI control. Use "android:layout_marginLeft" &
+    "android:layout_marginRight". 
+
+12. Add the top margin as well so there is a gap between out TextView and Button UI
+    controls.
+
+13. Switch Back to the Design view to preview what it will look like.
+
+14. Let's build and run our application to see what it looks like within the
+    emulator.
+
+15. Open up the Kotlin file for this layout -> "MainActivity.kt"
+
+17. Add the following line of code to the body of the MainActivity class.
+
+    private lateinit var btnTakePhoto: Button
+
+18. Next, add the following line of code to the onCreate() method:
+
+    btnTakePhoto = findViewById(R.id.btnTakePhoto)
+
+19. Before the onCreate() method, hit Enter twice to create space for
+    creating a new function. It is what we call an event handler method.
+
+    Enter the following code:
+
+    /**
+     *  This is one way we can declare a function to handle our Button click events.
+     */
+    fun btnTakePhoto_Click(button: Button)  {
+        Toast.makeText(this,"You have clicked me!",Toast.LENGTH_LONG).show()
+    }
+
+20. Let's Run the Project.
+
+21. There is a second method of handling an event, and that is from within the Kotlin
+    code file itself.
+
+    (a) We will comment away the btnTakePhoto_Click method.
+    (b) Within the onCreate() method, we will add the following code:
+    
+        btnTakePhoto.setOnClickListener {
+            Toast.makeText(this,"You have clicked me!",Toast.LENGTH_LONG).show()
+        }
+    
+    (c) Return to the UI view and remove the attribute onClick" from the Take Photo 
+        button.
+
+22. There is no right or wrong method. They are just two different flavours of how 
+    you want to get things done. However, if you do explore the Java language's way
+    of doing things, you might find the second method more familiar.
+
+23. Go back to the UI Design view.
+
+    (a) Select the TextView control, under the attributes panel, let's change the
+        value of textSize to 28sp.
+    (b) Select the Button control, let's give it a backgroundColor & change the
+        textColor.
+
+        (i)     Look for the "backgroundTint" attribute, select the color indicator box on
+                the right field. This will open up a color picker. Pick any color. Once you're
+                done, click on the area outside the pop-up window to close it.
+        (ii)    Next, look for the "textColor" attribute, you can select the color by doing the
+                same as what we just did for the TextView backgroundTint.
+        [TIP]   It is always good to ensure that you pick colors that are a contrast to each
+                other this will help to ensure a better User Experience (UX).
