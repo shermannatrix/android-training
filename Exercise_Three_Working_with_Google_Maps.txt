@@ -1,0 +1,43 @@
+1.  To start off this exercise, we are going to close off our TrainingApp, and we are going
+    to create another app. This time with the Google Maps Activity.
+
+2.  Start by going to File -> Select "New" -> "New Project..."
+
+3.  Next, select the "Google Maps Activity" template.
+
+    Click "Next".
+
+    Change the Name of the application to "MapExample"
+
+    Select API 26 as the minimum API level.
+
+    Click "Finish"
+
+4.  Once our project files is created & the build is done, Android Studio will automatically 
+    open up two files:
+
+    (a) google_maps_api.xml
+    (b) MapsActivity.java
+
+    Within google_maps_api.xml, there will be instructions on how to get the API key from 
+    Google Maps.
+
+    When you launch the unique url in the web browser, select "Create a Project" in the first
+    step.
+
+    Next step, click  on "Create API key".
+
+    Next, copy and paste that API key to the <string name="google_maps_key">[Value]</string>
+    value within the google_maps_api.xml file.
+
+5.  Next, let's take a look at how we can get a location and putting a marker on it. The
+    good thing about this example is that it already has the basic example, all we have to do
+    is make a few changes in the onMapReady() method:
+
+    // Add a marker in Bedok MRT Station and move the camera
+    val bedokMrt = LatLng(1.3240113, 103.9279838)
+    mMap.addMarker(MarkerOptions().position(bedokMrt).title("Marker in Bedok"))
+    mMap.moveCamera(CameraUpdateFactory.newLatLng(bedokMrt))
+
+6.  You could actually program the Android app to dynamically detect location, however for
+    today's workshop, we will not be diving into that part.    
